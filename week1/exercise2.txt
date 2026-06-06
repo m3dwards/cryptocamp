@@ -1,0 +1,31 @@
+The Necklace Proof
+
+Imagine you have beads in a different colours, and you want to make a necklace with p beads.
+
+Step 1 — Count the sequences
+
+First, just lay the beads in a straight line. You have a choices for each bead, so there are aᵖ total sequences.
+
+Step 2 — Remove the boring ones
+
+Some sequences are all the same colour — like all red, all blue, etc. There are exactly a of those. Set them aside.
+
+That leaves aᵖ − a sequences.
+
+Step 3 — Now make them into necklaces
+
+Take any remaining sequence and bend it into a circle. You can rotate it p ways to get a different-looking sequence, like:
+
+🔴🔵🟡🟢🟣🔴🔵  →  🔵🟡🟢🟣🔴🔵🔴  →  🟡🟢🟣🔴🔵🔴🔵  → ...
+
+Because p is prime and the sequence isn't all one colour, all p rotations look different — none of them repeat. So every necklace accounts for exactly p sequences.
+
+Step 4 — The punchline
+
+Since every necklace uses up exactly p sequences, and we have aᵖ − a sequences total, that number must be divisible by p:
+
+aᵖ − a is divisible by p
+
+Which is just another way of writing aᵖ ≡ a (mod p) — and that's Fermat's Little Theorem. ✅
+
+The only leap of faith is step 3 — why do all p rotations differ? Because if any rotation brought you back to the start early, the repetition length would have to divide p. But p is prime, so the only divisors are 1 and p — and length 1 would mean all beads are the same colour, which we already excluded.
