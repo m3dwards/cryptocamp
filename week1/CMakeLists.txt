@@ -5,3 +5,4 @@ set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_STANDARD 26)
 
 add_executable(fastexponentiation fastexponentiation.cpp)
+add_executable(modinverse modinverse.cpp)
