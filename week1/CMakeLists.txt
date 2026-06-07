@@ -6,3 +6,4 @@ set(CMAKE_CXX_STANDARD 26)
 
 add_executable(fastexponentiation fastexponentiation.cpp)
 add_executable(modinverse modinverse.cpp)
+add_executable(elgamal elgamal.cpp)
