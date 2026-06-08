@@ -4,6 +4,7 @@ In number theory, Fermat's little theorem states that if p is a prime number, th
 
 
 
+
 The Necklace Proof
 
 Imagine you have beads in a different colours, and you want to make a necklace with p beads.
