@@ -3,6 +3,7 @@ Fermat's Litte Theorem
 In number theory, Fermat's little theorem states that if p is a prime number, then for any integer a, the number ap − a is an integer multiple of p
 
 
+
 The Necklace Proof
 
 Imagine you have beads in a different colours, and you want to make a necklace with p beads.
