@@ -1,0 +1,19 @@
+Diffie-Hellman
+
+Setup:
+Pick a large prime p and a generator g of the multiplicative group of integers modulo p
+
+x and y should be chosen randomly from {1, ..., p-2}
+
+Alice picks secret x, computes X = g^x mod p, sends X to Bob.
+Bob picks secret y, computes Y = g^y mod p, sends Y to Alice.
+
+Alice computes Y^x mod p, Bob computes X^y mod p, and they both land on g^(xy) mod p — the shared secret Z.
+
+If we had a black box that when you feed it g^a, and it spits out a:
+
+Feed X = g^x into the magic box - it gives you back x
+Now compute Y^x = (g^y)^x = gˣ·ʸ = Z
+
+
+OMDL is basically asking: "can you solve k discrete logs when you're one answer short?" — and the assumption is that being one short is enough to keep it hard, no matter how clever you are with your free queries.
