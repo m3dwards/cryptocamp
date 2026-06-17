@@ -1,0 +1,20 @@
+Setup. Ω = {000, 001, 010, 011, 100, 101, 110, 111}, with Pr[{x}] = 1/8 for every x.
+
+(a) k starts with a 0
+The event is E_a = {000, 001, 010, 011}.
+By Rule 3:
+Pr[E_a] = Pr[{000}] + Pr[{001}] + Pr[{010}] + Pr[{011}] = 1/8 + 1/8 + 1/8 + 1/8 = 4/8 = 1/2
+This makes sense intuitively: exactly half the 3-bit strings begin with 0.
+
+(b) k has an even number of 1s
+"Even" includes zero. Count the 1s in each string: 000 has zero (even), 011 has two (even), 101 has two (even), 110 has two (even). The rest (001, 010, 100, 111) have an odd count.
+The event is E_b = {000, 011, 101, 110}.
+By Rule 3:
+Pr[E_b] = Pr[{000}] + Pr[{011}] + Pr[{101}] + Pr[{110}] = 1/8 + 1/8 + 1/8 + 1/8 = 4/8 = 1/2
+Again exactly half — this is a general fact: for any n, exactly half of all n-bit strings have an even number of 1s (you can prove it by pairing each string with its complement).
+
+(c) k = 010
+There is exactly one string equal to 010, so the event is just the singleton E_c = {010}.
+By Rule 3 (with only one element in the sum):
+Pr[E_c] = Pr[{010}] = 1/8
+This is immediate from the uniform distribution: each of the 8 equally likely keys has probability 1/8, and {010} contains only one of them.
