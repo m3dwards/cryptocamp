@@ -1,0 +1,19 @@
+The "no shared birthday" probability
+It's easier to start here. Imagine the 30 people walk into a room one at a time:
+
+Person 1 can have any birthday: 365/365
+Person 2 must avoid person 1's birthday: 364/365
+Person 3 must avoid both: 363/365
+Person 4: 362/365
+...
+Person 30: 336/365
+
+Multiply all of those together:
+P(no match) = 365/365 × 364/365 × 363/365 × ... × 336/365
+Each new person has slightly fewer "safe" birthdays available. You're multiplying 30 fractions that are all just below 1, and small numbers multiplied together many times shrink fast.
+That product works out to roughly 0.294, so about 29%.
+
+The "at least one shared birthday" probability
+This is just the complement — if there's a 29% chance of no match, then:
+P(at least one match) = 1 − 0.294 ≈ 0.706
+So roughly 70% — with just 30 people!
