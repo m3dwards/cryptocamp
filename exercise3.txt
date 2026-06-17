@@ -1,0 +1,55 @@
+Now The Actual Question
+
+"Show that if discrete log is hard, then it is hard to forge two Schnorr signatures for the same nonce"
+
+In other words: if an attacker produces two valid signatures (R, s₁) and (R, s₂) on two different messages m₁ and m₂, using the same R — show that's as hard as solving discrete log.
+The proof by reduction strategy: assume someone CAN do this forgery. Build a machine that uses them to solve discrete log. Conclude that since discrete log is hard, the forgery must also be hard.
+
+What Does "Two Valid Signatures For The Same Nonce" Give Us?
+If both signatures are valid, the verification equation must hold for both:
+
+gˢ¹ = R · X^H(R,m₁)  ... (equation 1)
+
+
+gˢ² = R · X^H(R,m₂)  ... (equation 2)
+
+But remember what s actually is:
+
+s₁ = k + H(R, m₁) · x
+
+
+s₂ = k + H(R, m₂) · x
+
+Notice something? Both contain the same k, because the nonce R is the same.
+
+The Magic: Subtract The Two Equations
+
+s₁ − s₂ = (k + H(R,m₁)·x) − (k + H(R,m₂)·x)
+
+The k's cancel out:
+
+s₁ − s₂ = H(R,m₁)·x − H(R,m₂)·x
+
+Factor out x:
+
+s₁ − s₂ = x · (H(R,m₁) − H(R,m₂))
+
+Divide both sides by (H(R,m₁) − H(R,m₂)):
+
+x = (s₁ − s₂) / (H(R,m₁) − H(R,m₂))
+
+We just extracted the private key x directly.
+This works because the two hashes are different (since m₁ ≠ m₂), so we're never dividing by zero.
+
+
+Putting It All Together As A Reduction
+Our "magic box" is the forger. We wire it up like this:
+Given: X = gˣ, want to find x
+              ↓
+  Feed X to our forger box
+              ↓
+  Forger produces (R, s₁, m₁) and (R, s₂, m₂)
+              ↓
+  We compute x = (s₁ − s₂) / (H(R,m₁) − H(R,m₂))
+              ↓
+         We have x ✅
