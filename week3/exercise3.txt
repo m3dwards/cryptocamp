@@ -1,0 +1,11 @@
+What it's saying
+
+"The probability that at least one of these events happens is at most the sum of their individual probabilities."
+
+In words: if you have n events, and you just add up all their probabilities, that sum is a ceiling — the true probability of any of them happening can't exceed it.
+Why is this true?
+Think about what happens when events overlap (share outcomes). If E₁ and E₂ both include the same outcome, then when you compute Pr[E₁] + Pr[E₂], you've counted that overlap twice. But the union only counts it once. So the sum can only be equal to or larger than the true probability of the union.
+A concrete example: say E₁ = "it rains" (Pr = 0.5) and E₂ = "it's cloudy" (Pr = 0.8). The sum is 1.3, but the probability that it rains or is cloudy can't exceed 1. The sum overcounts because rainy days are a subset of cloudy days.
+When is it an equality?
+Only when the events are mutually exclusive — no two events can happen at the same time, so there's no overlap to double-count. Then the sum is exact.
+Otherwise, it's a strict inequality — the sum overestimates the true probability.
