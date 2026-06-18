@@ -1,0 +1,28 @@
+Step 1: Define Ω
+The experiment has two stages — flip a coin, then roll a die whose size depends on the flip. So each outcome is a pair (coin result, die result):
+Ω = {(H,1), (H,2), (H,3), (H,4), (H,5), (H,6)} ∪ {(T,1), (T,2), (T,3), (T,4)}
+That's 6 outcomes from the heads branch and 4 from the tails branch — 10 outcomes total. But careful: they're not all equally likely, because reaching them requires different combinations of coin-then-die probabilities. We'll assign probabilities in a moment.
+Step 2: Why {heads, tails} is a partition
+"Heads" and "Tails" split Ω into two pieces that are:
+
+disjoint — no outcome belongs to both (the coin can't be both heads and tails)
+exhaustive — every single outcome in Ω falls under one or the other
+
+That's what makes something a valid partition, and it's exactly what licenses the formula Pr[E] = Pr[E | heads]·Pr[heads] + Pr[E | tails]·Pr[tails] — you're just adding up E's probability across every disjoint way E could happen.
+Step 3: Compute the pieces
+
+Pr[heads] = 1/2, Pr[tails] = 1/2 (fair coin)
+Pr[E | heads] = Pr[die shows 3 | heads] = 1/6 — given heads, you roll the fair 6-sided die, and each face is equally likely
+Pr[E | tails] = Pr[die shows 3 | tails] = 1/4 — given tails, you roll the fair 4-sided die
+
+Step 4: Combine
+Pr[E] = Pr[E | heads]·Pr[heads] + Pr[E | tails]·Pr[tails]
+
+Pr[E] = (1/6)(1/2) + (1/4)(1/2)
+
+Pr[E] = 1/12 + 1/8
+Common denominator 24: 1/12 = 2/24, and 1/8 = 3/24.
+Pr[E] = 5/24
+Sanity check by direct counting
+Each outcome (H,i) has probability 1/2 · 1/6 = 1/12, and each outcome (T,j) has probability 1/2 · 1/4 = 1/8. E = {(H,3), (T,3)}, so directly: Pr[E] = 1/12 + 1/8 = 5/24. Matches — good.
+The move you'll reuse for the one-time pad proof is exactly this: split on something (there it'll likely be the key, or the plaintext) into disjoint, exhaustive cases, compute the conditional probability in each case, then weight and sum.
