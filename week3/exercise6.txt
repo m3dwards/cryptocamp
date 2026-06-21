@@ -1,0 +1,32 @@
+What we're actually trying to show
+The adversary's advantage is typically defined as something like Adv(λ) = |Pr[A(c) = b] − 1/2| (your course notes may scale this differently, but it doesn't matter — any reasonable definition gives Adv = 0 the moment Pr[A(c) = b] = 1/2 exactly). So the whole exercise boils down to one task: show Pr[A(c) = b] = 1/2, no matter what A does.
+Setting up Ω (this is Exercise 4's move, just with more pieces)
+Ω = K × {0,1} × R — an outcome is a triple (k, b, r):
+
+k = the random key, drawn uniformly from K
+b = the challenger's coin flip, deciding whether to encrypt m0 or m1
+r = whatever randomness A uses internally
+
+For λ = 1: K = {0, 1}, so k is a single random bit, and m0, m1 are single bits too.
+Exactly like Exercise 4, we partition Ω — but now into four pieces instead of two, one for each combination (k, b) ∈ {(0,0), (0,1), (1,0), (1,1)}, each occurring with probability 1/4 (since k and b are independent fair coins). The law of total probability says:
+Pr[A(c) = b] = Σ over the four (k,b) cells of Pr[(k,b)] · Pr[A(c) = b | k, b]
+Once k and b are fixed, c = k ⊕ m_b is just a specific number — there's no more randomness left in c. So the only randomness inside Pr[A(c) = b | k, b] is A's own coin tosses r. Call this p_{k,b} = Pr_r[A(c) = b].
+Case 1: m0 ≠ m1 (so {m0, m1} = {0, 1} — say m0 = 0, m1 = 1)
+kbm_bc = k⊕m_bdesired output0000A(0) = 00111A(1) = 11001A(1) = 01110A(0) = 1
+Look at the rows where c = 0: row 1 (wants A(0)=0) and row 4 (wants A(0)=1). These are the only two ways A could ever even be asked about input c=0, and between them they cover both possible outputs A could give on that input. By the extra hint — Pr[A(0)=0] + Pr[A(0)=1] = 1 (A has to output something) — these two row-probabilities add to exactly 1.
+Same story for c = 1: row 2 (wants A(1)=1) and row 3 (wants A(1)=0) add to 1.
+So summing all four rows: 1 + 1 = 2. Dividing by 4 (since each cell has probability 1/4):
+Pr[A(c) = b] = 2/4 = 1/2
+Case 2: m0 = m1 (say both equal 0)
+kbm_bc = k⊕m_bdesired output0000A(0) = 00100A(0) = 11001A(1) = 01101A(1) = 1
+Now the pairing happens differently — rows 1 & 2 both land on c=0 (this time because they share the same k, not because of the m0≠m1 trick), and together want A(0)=0 and A(0)=1 — sums to 1. Rows 3 & 4 both land on c=1, wanting A(1)=0 and A(1)=1 — sums to 1.
+Total again: 1 + 1 = 2, divided by 4 gives Pr[A(c)=b] = 1/2.
+The pattern underneath both cases
+Notice what's really going on: for any fixed ciphertext value c, exactly two of the four (k,b) cells can produce it — one where b=0 (namely k = c⊕m0) and one where b=1 (namely k = c⊕m1). These always want opposite outputs from A (one wants A(c)=0, the other wants A(c)=1), so by the extra hint they always sum to exactly 1 — whether or not m0 happens to equal m1 just changes which k-values pair up, not the fact that they sum to 1. That's why Pr[A(c)=b] = 1/2 always, regardless of A's strategy: A literally cannot do better than a coin flip, because every possible ciphertext is equally consistent with both b=0 and b=1.
+Part (b): same argument, scaled up to λ bits
+Now K = {0,1}^λ and m0, m1 are λ-bit strings. The partition of Ω is now by all (k, b) pairs — 2^λ choices of k times 2 choices of b, so 2^(λ+1) cells, each with probability 1/2^(λ+1).
+The key fact generalizes perfectly: for any fixed ciphertext value c ∈ {0,1}^λ, exactly two cells produce it — (k = c⊕m0, b=0) and (k = c⊕m1, b=1) — because XOR-ing with a fixed string is invertible (k = c⊕m_b is the unique solution). This holds for every one of the 2^λ possible c values, and each such pair sums to 1 by the same total-probability argument.
+So: total sum over all 2^(λ+1) cells = 2^λ (one "1" contributed per ciphertext value) × 1 = 2^λ. Dividing by the number of cells:
+Pr[A(c) = b] = 2^λ / 2^(λ+1) = 1/2
+Why this is really just "independence" again
+Here's the conceptual heart, tying back to where we started this whole thread: the reason any (k,b)-pairing trick works at all is that c = k ⊕ m_b is independent of b. Because k is uniformly random, k⊕m_b lands on a uniformly random value in {0,1}^λ no matter which message m_b got XOR'd in — so seeing c gives zero information about which message was encrypted. That's exactly the independence intuition from the very start of this conversation (Pr[E1 | E2] = Pr[E1]) — here, E1 = "A guesses correctly," E2 = "the ciphertext is c" — knowing c tells you nothing, so guessing b is no better than a coin flip.
