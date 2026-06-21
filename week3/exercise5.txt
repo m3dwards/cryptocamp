@@ -1,0 +1,30 @@
+What we're trying to show
+There are two ways people define "E1 and E2 are independent":
+
+The plain-English way: Pr[E1 | E2] = Pr[E1] — "learning E2 happened doesn't change how likely E1 is."
+The textbook formula way: Pr[E1 ∩ E2] = Pr[E1] · Pr[E2] — "the chance of both happening equals the chance of E1 times the chance of E2."
+
+Exercise 5 wants you to show these two are always the same thing — whenever one is true, the other is automatically true too. That's what "if and only if" means: it's a two-way street, so we need to check both directions separately.
+A simple example to keep in your head
+Flip two fair coins. E1 = "first coin is heads," E2 = "second coin is heads." Each has probability 1/2. These coins don't affect each other, so this should be a case of independence.
+The one tool we need: the definition of conditional probability
+Pr[E1 | E2] = Pr[E1 ∩ E2] / Pr[E2]
+In plain words: "the chance of E1, given you know E2 happened" equals "the chance both happened" divided by "the chance E2 happened alone." This is just a definition — always true, whether or not E1 and E2 are independent.
+Direction 1: Plain-English definition ⇒ Textbook formula
+Start by assuming independence the plain-English way: Pr[E1 | E2] = Pr[E1].
+In our coin example, that's saying Pr[E1 | E2] = 1/2.
+Now swap in the definition of conditional probability for the left side:
+Pr[E1 ∩ E2] / Pr[E2] = Pr[E1]
+This is just an equation now — and we want to get rid of the division. So multiply both sides by Pr[E2]:
+Pr[E1 ∩ E2] = Pr[E1] · Pr[E2]
+And that's it — that's the textbook formula, derived. In numbers: Pr[E1 ∩ E2] = 1/2 · 1/2 = 1/4 (and indeed, "both coins heads" happens for exactly 1 out of 4 equally-likely outcomes — checks out).
+Direction 2: Textbook formula ⇒ Plain-English definition
+Now go backward. Start by assuming the textbook formula: Pr[E1 ∩ E2] = Pr[E1] · Pr[E2].
+We want to get back to Pr[E1 | E2] = Pr[E1]. Looking at the conditional probability definition again — Pr[E1 | E2] = Pr[E1 ∩ E2] / Pr[E2] — notice the right side has Pr[E1 ∩ E2] in it. We know what that equals! Substitute it in:
+Pr[E1 | E2] = (Pr[E1] · Pr[E2]) / Pr[E2]
+Now Pr[E2] is just a number sitting on the top and the bottom — it cancels:
+Pr[E1 | E2] = Pr[E1]
+Done — that's the plain-English definition, recovered.
+Why this counts as a full proof
+Because we showed the implication goes both ways — definition 1 leads to definition 2 (Direction 1), and definition 2 leads back to definition 1 (Direction 2) — we've shown they're completely equivalent. Whichever one is true, the other is automatically true too. That's exactly what "if and only if" requires.
+The only step doing any real work in either direction is "multiply both sides by Pr[E2]" or "cancel Pr[E2] from top and bottom" — same algebraic move, just run in opposite directions.
