@@ -1,0 +1,65 @@
+(a) "Sign halves" is not secure — show an attack
+The scheme signs a pair of messages (mL, mR) by signing each half independently with a different key:
+Ŝ((sk0, sk1), (mL, mR)) = (S(sk0, mL), S(sk1, mR))
+V̂((pk0, pk1), (mL, mR), (σ0, σ1)) = V(pk0, mL, σ0) ∧ V(pk1, mR, σ1)
+The vulnerability: the two halves are signed completely independently. Nothing ties mL and mR together as a pair. So if we can get signatures on two different message-pairs, we can "mix and match" the halves to forge a signature on a brand new pair that was never queried.
+The attack:
+
+Query the signing oracle on (mL, mR) = (0^λ, 0^λ), receiving (σ0, σ1) = (S(sk0, 0^λ), S(sk1, 0^λ)).
+Query the signing oracle on (mL, mR) = (1^λ, 1^λ), receiving (σ0', σ1') = (S(sk0, 1^λ), S(sk1, 1^λ)).
+Output the forgery (m*, σ*) = ((0^λ, 1^λ), (σ0, σ1')).
+
+Why this wins:
+
+It verifies: V̂ checks V(pk0, 0^λ, σ0) ∧ V(pk1, 1^λ, σ1'). Both hold — σ0 is a genuine signature on 0^λ under sk0, and σ1' is a genuine signature on 1^λ under sk1.
+It's fresh: the queried pairs were (0^λ, 0^λ) and (1^λ, 1^λ). The forged pair (0^λ, 1^λ) is different from both, so (0^λ, 1^λ) ∉ Q.
+
+This adversary wins with probability 1, so Adv = 1, which is not negligible. The scheme is broken with just two oracle queries.
+
+(b) "Sign with randomness" is not secure — show an attack
+The scheme:
+Ŝ(sk0, m) = [choose random r; output (r, S(sk0, m ⊕ r), S(sk0, r))]
+V̂(pk0, m, (r, σ0, σ1)) = V(pk0, m ⊕ r, σ0) ∧ V(pk0, r, σ1)
+The vulnerability: notice σ1 is just a base-scheme signature on r alone, with no dependence on m at all. And σ0 is a signature on m ⊕ r. This means if we get a signature on m using randomness r, we actually learn valid base-scheme signatures on two values: r itself, and m ⊕ r. We can recombine these pieces for other messages.
+The attack:
+
+Query the signing oracle on m = 0^λ, receiving (r, σ0, σ1) where σ0 = S(sk0, 0^λ ⊕ r) = S(sk0, r) (since 0^λ ⊕ r = r) and σ1 = S(sk0, r).
+Notice: since m = 0^λ, both σ0 and σ1 are signatures on the same value r! So really we just learn one thing: a valid signature σ := σ0 = σ1 on r.
+Now pick any fresh message m* ≠ 0^λ. Output the forgery (m*, (r*, σ0*, σ1*)) where we set r* = r ⊕ m* (so that m* ⊕ r* = r), and σ0* = σ, σ1* = σ.
+
+Why this wins:
+
+It verifies: V̂ checks V(pk0, m* ⊕ r*, σ0*) ∧ V(pk0, r*, σ1*). We have m* ⊕ r* = r by construction, so the first check is V(pk0, r, σ) — true, since σ is a genuine signature on r. The second check is V(pk0, r*, σ1*) = V(pk0, r ⊕ m*, σ) — also r, also true.
+It's fresh: we only ever queried m = 0^λ, and we chose m* ≠ 0^λ, so m* ∉ Q.
+
+This wins with probability 1 (querying m = 0^λ always produces this exploitable degenerate signature where σ0 = σ1), so Adv = 1, not negligible.
+
+(c) "Accept one valid" is secure — prove it by reduction
+Ŝ((sk0, sk1), m) = (S(sk0, m), S(sk1, m))
+V̂((pk0, pk1), m, (σ0, σ1)) = V(pk0, m, σ0) ∨ V(pk1, m, σ1)
+We want: (G, S, V) secure ⇒ (Ĝ, Ŝ, V̂) secure. As in the document's example, we prove the contrapositive: assume a PPT adversary A that forges against (Ĝ, Ŝ, V̂) with non-negligible advantage, and build a PPT adversary A' that forges against (G, S, V) with non-negligible advantage.
+The subtlety: A's forgery (m*, (σ0*, σ1*)) only guarantees that at least one of σ0*, σ1* verifies — A' doesn't know which one. So A' has to guess, and pay a probability cost for the guess (this is exactly why the hint about the union bound matters).
+The reduction A':
+A' is given a public key pk for the base scheme, and access to a signing oracle Sign(·) = S(sk, ·).
+
+Before running A, flip a coin b ∈ {0, 1} uniformly at random. A' will embed its given pk as pkb (guessing that A's eventual valid signature will be the one under key b), and generate its own key pair (pk1−b, sk1−b) ← G(λ) honestly for the other side.
+Run A(pk0, pk1).
+Whenever A queries its signing oracle on a message m: A' queries its own oracle to get S(sk, m) = S(skb, m), and computes S(sk1−b, m) itself (since it knows sk1−b). It returns (σ0, σ1) — the correctly assembled pair — to A.
+When A outputs a forgery (m*, (σ0*, σ1*)), A' outputs (m*, σb*) (just the half corresponding to the key it embedded).
+
+Checking A' wins when A wins, conditioned on the guess being correct:
+A wins means: V̂(pk0, pk1, m*, σ0*, σ1*) = true and m* ∉ Q. By definition of V̂, "true" means at least one of V(pk0, m*, σ0*), V(pk1, m*, σ1*) holds.
+Suppose A' guessed correctly — meaning the side that actually verifies is side b (the one A' embedded as its challenge key). Then V(pkb, m*, σb*) = true, so A''s output (m*, σb*) verifies under the real challenge key pk.
+We also need m* fresh against A''s own oracle. A' only ever queried its own oracle on exactly the same messages A queried (one query to A' per query to A), so m* ∉ Q for A means m* was never sent to A''s oracle either. Fresh. ✓.
+So whenever A wins and A' guessed the correct side, A' wins too.
+Accounting for the guess (this is where the hint comes in):
+A''s guess b is independent of A's behavior (A gets no information about b — both pk0 and pk1 are handed to A identically, and A' programmed the unchosen key honestly itself, so the view A sees is identical regardless of b). So:
+Pr[A' wins] = Pr[A wins] · Pr[guess correct] = Pr[A wins] · 1/2
+Since Adv_A is non-negligible by assumption, and a non-negligible function divided by the constant 2 is still non-negligible (you essentially showed this in Exercise 4.2 style reasoning — multiplying or dividing by a constant doesn't change negligibility), Adv_A' = Adv_A / 2 is also non-negligible.
+A' is PPT: it just runs A, plus one extra base-scheme signing computation per oracle query, plus generating one extra key pair up front — all polynomial-time operations.
+This contradicts the assumed security of (G, S, V). Therefore (Ĝ, Ŝ, V̂) is EUF-CMA secure. ∎
+
+Where the hint's union bound actually shows up
+You might wonder why the hint mentions Pr[σ0 or σ1 valid] ≤ Pr[σ0 valid] + Pr[σ1 valid] — I didn't explicitly need it above because I went straight at "at least one holds" via a guessing argument. But there's an alternative way to organize the proof that uses it directly: define A0' and A1' as two reductions, where Ai' guesses side i is the one that verifies and behaves as above. Then:
+Adv_A ≤ Pr[V(pk0,m*,σ0*)] + Pr[V(pk1,m*,σ1*)] ≤ Adv_{A0'} + Adv_{A1'}
+Since the sum of two things is non-negligible only if at least one summand is non-negligible (the contrapositive of part (a) of Exercise 4.3, which you already proved — the sum of two negligible functions is negligible, so if the sum is non-negligible, not both can be negligible), at least one of A0' or A1' has non-negligible advantage. That gives you a successful reduction without needing the random-guess factor-of-2 loss. Either approach is valid; the guessing version is more concrete to write out, but the union-bound version is the "intended" use of the hint and avoids the constant-factor loss.

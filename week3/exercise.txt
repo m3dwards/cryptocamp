@@ -1,0 +1,103 @@
+4.2
+
+Let me go through each one. The key question each time is: does it decay faster than every inverse polynomial 1/λ^c?
+A useful fact to keep in mind: exponentials beat polynomials, and polynomials beat logarithms. So in the "race to the bottom":
+
+2^(−λ) decays incredibly fast ✓ negligible
+1/λ^c decays polynomially — the borderline
+1/log(λ) decays painfully slowly ✗ not negligible
+
+
+1. 1/2^(λ/2)
+This is 2^(−λ/2), a proper exponential decay. Multiply by any polynomial p(λ) — the exponential still wins. Negligible. ✓
+
+2. 1/2^(log(λ²))
+Simplify first. log(λ²) = 2log(λ), so this is 2^(−2log(λ)) = (2^(log(λ)))^(−2) = λ^(−2) = 1/λ².
+That's a polynomial! Multiply by p(λ) = λ³ and you get λ, which doesn't go to zero. Not negligible. ✗
+
+3. 1/(λ·log(λ))
+This decays slightly faster than 1/λ, but not by much. Multiply by p(λ) = λ:
+λ · 1/(λ·log(λ)) = 1/log(λ) → 0 ✓
+But multiply by p(λ) = λ²:
+λ² · 1/(λ·log(λ)) = λ/log(λ) → ∞ ✗
+So it doesn't beat every polynomial. Not negligible. ✗
+
+4. 1/λ²
+Straightforwardly a polynomial. Multiply by p(λ) = λ³ and you get λ → ∞. Not negligible. ✗
+
+5. 1/2^((log λ)²)
+This one needs more care. Let's write it as 2^(−(log λ)²).
+The exponent is (log λ)², which grows faster than any constant but slower than λ itself. So this decays faster than any polynomial but slower than a true exponential — it sits in between.
+To check: multiply by λ^c = 2^(c·log λ). You get:
+2^(c·log λ − (log λ)²) = 2^(log λ · (c − log λ))
+For large enough λ, log λ > c, so the exponent becomes negative and grows in magnitude. The whole thing → 0. This works for any c. Negligible. ✓
+
+6. 1/(log λ)²
+Decays very slowly. Multiply by p(λ) = 1 (the constant polynomial):
+1 · 1/(log λ)² → 0 ✓
+But multiply by p(λ) = log(λ)³... wait, that's not a polynomial in λ. Let's try p(λ) = λ:
+λ/(log λ)² → ∞ ✗
+Doesn't beat even the simplest non-constant polynomial. Not negligible. ✗
+
+7. 1/λ
+The most basic inverse polynomial. Multiply by p(λ) = λ and you get 1, which doesn't go to zero. Not negligible. ✗
+
+8. 1/λ^(1/λ)
+This one is subtle. As λ → ∞, the exponent 1/λ → 0, so λ^(1/λ) → 1. That means 1/λ^(1/λ) → 1.
+It doesn't even go to zero, let alone negligibly fast. Not negligible. ✗
+
+9. 1/√λ = λ^(−1/2)
+Still a polynomial (fractional exponent, but polynomial). Multiply by p(λ) = λ:
+λ · λ^(−1/2) = λ^(1/2) → ∞ ✗
+Not negligible. ✗
+
+10. 1/2^(√λ)
+This is 2^(−√λ). The exponent √λ grows without bound, so this is a super-polynomial decay — faster than any 1/λ^c, but not quite a full exponential.
+Multiply by λ^c = 2^(c·log λ):
+2^(c·log λ − √λ)
+For large λ, √λ dominates c·log λ (since √λ grows faster than log λ), so the exponent → −∞ and the whole thing → 0. Works for any c. Negligible. ✓
+
+Summary
+FunctionNegligible?1/2^(λ/2)✓ Yes1/2^(log(λ²))✗ No (= 1/λ²)1/(λ·log λ)✗ No1/λ²✗ No1/2^((log λ)²)✓ Yes1/(log λ)²✗ No1/λ✗ No1/λ^(1/λ)✗ No (→ 1)1/√λ✗ No1/2^(√λ)✓ Yes
+The negligible ones are exactly those where the decay is super-polynomial — the exponent grows faster than any constant, even if it's not a full linear exponential.
+
+
+4.3 
+(a) f + g is negligible
+What we need to show: for every polynomial p, we have p(λ)·(f(λ) + g(λ)) → 0 as λ → ∞.
+Proof:
+Expand the product:
+p(λ)·(f(λ) + g(λ)) = p(λ)·f(λ) + p(λ)·g(λ)
+Now, since f is negligible, p(λ)·f(λ) → 0 for every polynomial p. In particular it holds for this p.
+Since g is negligible, p(λ)·g(λ) → 0 for every polynomial p. Same p.
+So we have the sum of two things that both go to zero, which itself goes to zero:
+p(λ)·f(λ) + p(λ)·g(λ) → 0 + 0 = 0
+Since p was an arbitrary polynomial, this holds for all polynomials. So f + g is negligible. ∎
+
+(b) f · g is negligible
+What we need to show: for every polynomial p, we have p(λ)·f(λ)·g(λ) → 0 as λ → ∞.
+The key trick: split the work between f and g by writing p(λ) cleverly.
+Since p(λ) is a polynomial, so is p(λ)·λ (just multiply through — if p has degree d, this has degree d+1, still a polynomial). Call this new polynomial q(λ) = p(λ)·λ.
+Now write:
+p(λ)·f(λ)·g(λ) = [q(λ)·f(λ)] · [g(λ)/λ...
+Hmm, that's getting messy. Simpler approach:
+Write:
+p(λ)·f(λ)·g(λ) = [p(λ)·f(λ)] · g(λ)
+Since f is negligible, p(λ)·f(λ) → 0. Call this quantity h(λ) = p(λ)·f(λ). So we need h(λ)·g(λ) → 0 where h(λ) → 0.
+Since g is negligible, in particular g(λ) → 0 (take p = 1, the constant polynomial — then 1·g(λ) → 0).
+So h(λ)·g(λ) is the product of two things that both go to zero, which goes to zero.
+
+
+4.4
+
+Show that when f is negligible, then for every polynomial p, the function p(λ)f (λ) not
+only approaches 0, but it is also negligible itself
+
+The contrapositive is easier to prove: if p(λ)f(λ) is not negligible, then f(λ) is not negligible.
+
+Proof:
+Suppose p(λ)f(λ) is not negligible. Then there exists some polynomial q such that q(λ)·[p(λ)f(λ)] does not go to zero.
+But q(λ)·[p(λ)f(λ)] = [q(λ)·p(λ)]·f(λ), and r(λ) = q(λ)·p(λ) is a polynomial.
+So we have a polynomial r such that r(λ)·f(λ) does not go to zero.
+Therefore f is not negligible
+

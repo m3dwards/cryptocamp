@@ -1,0 +1,3 @@
+ Property 2 is just property 1 flipped upside down.
+
+ Property 3 is just the same as property 2 but written as λ^c instead of any polynomial but is itself a polynomial.
