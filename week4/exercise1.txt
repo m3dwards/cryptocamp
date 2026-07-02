@@ -1,0 +1,22 @@
+Assumption 1 - A′ keeps a lookup table (cache) of every (input, output) pair it has seen from H. When B′ makes a query x:
+
+If x is already in the cache, A′ answers with the cached value, without forwarding anything to the real oracle.
+If x is new, A′ forwards it to H, records the answer in the cache, and returns it to B′.
+
+Since H is a fixed function (a random oracle just means it behaves like a uniformly random fixed function — repeated inputs always give the same output), this cache is perfectly consistent with querying H for real every time. So B′'s view is identical whether or not A′ caches, meaning A′ has exactly the same success probability as B′, but now A′ only ever forwards each distinct input once. At most q(n) distinct queries get forwarded, so the query bound is preserved
+
+Assumption 2 - Never re-querying a known signing answer
+This slots into the same cache mechanism. Whenever B′ requests a signature on some message m and receives back (r, s) with I := V(pk, r, s), that's telling us H(I, m) = r — that's literally the verification equation, and it holds with overwhelming probability for honestly generated signatures (by correctness of the scheme). So A′, immediately upon returning a signature to B′, pre-populates its cache with the entry (I, m) ↦ r, before B′ has a chance to ask.
+Then if B′ later does query H(I, m), the cache-lookup from Assumption 1's mechanism answers it directly with r — again with a value that's guaranteed consistent with the real oracle, so B′'s view (and success probability) is unchanged. The only difference is that now no actual H-query is spent on something A′ could deduce in advance, so this doesn't even cost extra queries — if anything it saves them.
+So really, Assumptions 1 and 2 are implemented by one combined caching wrapper: cache every H-answer you see, and proactively cache (I,m) ↦ r the moment a signature is issued.
+
+Assumption 3 — a forgery is always preceded by the relevant query
+This one is different in flavor: instead of intercepting queries, we intercept the output. Suppose B′ eventually outputs a forgery (r, s) on message m. Let I := V(pk, r, s). A′ checks its cache: has (I, m) been queried (or auto-cached) yet?
+
+If yes, nothing to do — A′ just outputs (r, s) as its forgery too.
+If no, A′ simply makes the query H(I, m) itself, right before outputting the forgery, and then outputs (r, s).
+
+This doesn't change B′'s forgery at all — same (r, s), same m, same validity — it just guarantees that by the time A′ (the combined algorithm) outputs, the pair (I, m) has been queried at least once. Since this adds at most one extra query, the total is now at most q(n) + 1, still polynomial. So A′'s success probability is identical to B′'s, and the assumption now holds by construction.
+Why this matters for the rest of the proof
+The reason Assumption 3 in particular is load-bearing (as the professor flagged) is that the reduction algorithm A (attacking the identification scheme) works by guessing an index j ∈ {1,...,q}, hoping that A′'s j-th H-query is exactly the (I, m) pair used in the eventual forgery — that's how A gets to "embed" its own challenge r into A′'s view. If A′ could forge without ever having queried H(I,m), there'd be no query for A's guess to land on, and the whole embedding trick would fail. Assumptions 1 and 2 matter for a related but slightly different reason: they keep the bookkeeping clean — they guarantee that each of A′'s q queries corresponds to a distinct, "fresh" (I,m) pair that A hasn't already had to answer via the signing oracle, which is what lets A answer signing queries honestly (via Transsk) while independently controlling the H-oracle answers for guessing purposes.
+So each assumption is really just A′ = (wrapper) ∘ B′, where the wrapper does bookkeeping that doesn't touch B′'s success probability at all — the "cost" is only ever a small additive increase (+1, in the worst case) to the query count, which is irrelevant since q(n) just needs to stay polynomial.
