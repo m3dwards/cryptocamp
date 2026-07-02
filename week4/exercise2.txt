@@ -1,0 +1,49 @@
+Exercise 2: In the AGM, show by reduction that if DL holds for a group, then CDH also holds.
+
+• DL problem: given  U = gʷ , find  w .
+• CDH problem: given  X = gˣ ,  Y = gʸ , compute  Z = g^(xy) .
+• Goal: DL hard ⇒ CDH hard. By contrapositive, assume you have an algebraic adversary  A  that breaks CDH, and build  A′  that breaks DL. Since we assume DL is hard, no such  A′  can exist, so no such  A  can exist either.
+
+The key leverage: the algebraic representation
+
+This is the whole reason the proof works in the AGM (and avoids rewinding). When the algebraic  A  outputs its CDH answer  Z , it must also output exponents  (a, b, c)  explaining  Z  in terms of everything it was given ( g, X, Y ):
+
+Z = gᵃ · Xᵇ · Yᶜ
+
+If  A  wins, then also  Z = g^(xy) . Taking  log_g  of both sides gives one scalar equation:
+
+xy = a + b·x + c·y   (mod q)          (★)
+
+The reduction A′
+
+ A′  gets the DL challenge  U = gʷ  and wants  w . The trick: hide  w  in one of the two CDH inputs and pick the other one yourself.
+
+1. Choose a uniform  t ∈ Z_q .
+2. Set  X := U (= gʷ)  and  Y := gᵗ . 
+→ So implicitly  x = w  (unknown) and  y = t  (known to  A′ ).
+→ Since  w  and  t  are both uniform and independent,  (X, Y)  is a perfectly distributed CDH instance —  A  can't tell it apart from a real one.
+3. Run  A(X, Y)  → get  Z  and its algebraic list  (a, b, c) .
+4. If  A  succeeds, plug  x = w ,  y = t  into (★):
+
+w·t = a + b·w + c·t   (mod q)
+``` This is **linear in the one unknown `w`**. Rearrange:
+
+w·(t − b) = a + c·t   ⇒   w = (a + c·t)·(t − b)⁻¹  (mod q)
+
+5. Output that `w`.
+
+## Why it works
+- `A′` never needs `w` to build the instance — it only knows `t = log_g Y`, which is *not* enough to solve CDH itself (that needs `x = w`). So `A` is doing real work.
+- The extraction is possible **only** because `A` handed over `(a, b, c)`. A non-algebraic adversary wouldn't, and the proof would fail — that's exactly the power (and the limitation) of the AGM.
+- **No rewinding / forking.** Compare this to Reading 2's identification proof, where you had to run `A` *twice* and hope `r₁ ≠ r₂`. Here a *single* successful run extracts the secret.
+
+## The advantage bound
+The only failure (when `A` wins) is a division by zero, i.e. `t = b`. But `A` picks `b` having seen only `Y = gᵗ`, not `t` itself; guessing `t` means solving DL, so `Pr[t = b] ≤ 1/q`. Therefore
+
+Adv_DL(A′) ≥ Adv_CDH(A) − 1/q.
+
+If DL is hard, the left side is negligible, and `1/q` is negligible, so `Adv_CDH(A)` is negligible. Since `A` was arbitrary, **CDH holds in the AGM.** ∎
+
+---
+
+One design note: you could instead put `w` in *both* inputs (`X = Y = gʷ`), which turns (★) into a **quadratic** `w² − (b+c)w − a = 0` solved by the quadratic formula. It works, but then `X, Y` aren't independent, so you'd have to argue the instance distribution more carefully. Putting `w` in one slot and randomizing the other is cleaner.
