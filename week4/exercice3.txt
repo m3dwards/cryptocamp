@@ -1,0 +1,87 @@
+Use proof by reduction in the AGM (+ROM) to show that if DL holds, then the Schnorr signature is EUF-CMA secure.
+
+The good news: because we're in the AGM, this is a single-run, no-rewinding proof (unlike the Katz–Lindell version in Reading 2). Let me set up the skeleton, then we'll turn the crank on the algebra together.
+
+Notation (matching the hint)
+
+Schnorr signature (Construction 13.12), written in  (R, s)  form:
+
+• Keys:  sk = x ,  pk = gˣ .
+• Sign(m): pick  k , set  R = gᵏ ,  e = H(R, m) ,  s = k + e·x . Signature =  (R, s) .
+• Verify: accept iff  gˢ = R · pkᵉ  where  e = H(R,m) . Equivalently  R = gˢ·pk⁻ᵉ .
+
+The reduction A′
+
+ A′  gets a DL challenge  pk = gˣ  and wants to output  x . It runs the forger  A  and must fake three things without knowing  x :
+
+1. Public key — just hand  A  the challenge  pk . (Perfect.)
+
+2. Signature queries (the simulation/HVZK trick). On the  i -th signing query for message  mᵢ ,  A′  reverses the order — it does not know  x , so it picks the answer first:
+
+pick random  eᵢ, sᵢ ∈ Z_q
+set  Rᵢ := g^{sᵢ} · pk^{-eᵢ}        ⟹  Rᵢ satisfies verification by construction
+program the oracle:  H(Rᵢ, mᵢ) := eᵢ
+return signature (Rᵢ, sᵢ)
+
+Note  Rᵢ  is uniform, so this is distributed exactly like a real signature — perfect simulation (abort only if the programmed point  (Rᵢ,mᵢ)  was already set, which happens with negligible probability).
+
+3. Hash queries. Keep a table. On a new query  (R̃, m̃) , return a fresh uniform  e . (If  R̃  happens to equal some  Rᵢ  at message  mᵢ , return the programmed  eᵢ  — the "be more careful" note in the hint.)
+
+Where the AGM earns its keep
+
+Because  A  is algebraic, every group element it emits comes with exponents relative to what it has received:  g ,  pk , and the  Rᵢ  returned from signing. So when  A  queries the oracle at a group element (and in the ROM,  A  must query  H(R,m)  to make a forgery on  R,m ), it supplies a list  (a₀, a₁, …, a_{q+1})  with:
+
+R = g^{a₀} · pk^{a₁} · ∏ᵢ Rᵢ^{a_{i+1}}          (†)
+
+ A  finally outputs a forgery  (m, R, s)  on a fresh message  m ∉ {m₁,…,m_q} , satisfying verification with  e = H(R, m) :
+
+gˢ = R · pkᵉ                                    (‡)
+
+Now the crank — take discrete logs (base g), write pk = gˣ
+
+This is the step where the two AGM facts collide into one equation. Let me push the exponents through.
+
+From the simulated signatures:  Rᵢ = g^{sᵢ}·pk^{-eᵢ} , so
+
+log Rᵢ = sᵢ − eᵢ·x.
+
+From the representation (†):
+
+log R = a₀ + a₁·x + Σᵢ a_{i+1}·(sᵢ − eᵢ·x).
+
+From verification (‡):
+
+s = log R + e·x.
+
+Substitute  log R  and collect the  x  terms:
+
+s = [ a₀ + Σᵢ a_{i+1}·sᵢ ]  +  x·[ a₁ + e − Σᵢ a_{i+1}·eᵢ ]
+
+This is linear in the single unknown  x . Everything in brackets is known to  A′ . Solve:
+
+        s − a₀ − Σᵢ a_{i+1}·sᵢ
+x  =  ─────────────────────────────      (mod q)
+         a₁ + e − Σᵢ a_{i+1}·eᵢ
+
+ A′  outputs this  x . No rewinding, no forking, single run. ✔
+
+The one thing to check: denominator ≠ 0
+
+Let  D = a₁ + e − Σᵢ a_{i+1}·eᵢ . All of  a₁ , the  a_{i+1} , and the  eᵢ  are fixed at the moment  A  makes the query  (R, m)  — they come bundled with  R . But  e = H(R,m)  is the oracle's response, chosen uniformly and independently afterward. So  D = e + (const) , and there's exactly one bad value of  e  that zeroes it:
+
+Pr[D = 0] = 1/q.
+
+Freshness of  m  (not among the signed  mᵢ ) is what guarantees  (R,m)  wasn't a programmed point, so  e  really is a free random value here.
+
+Conclusion
+
+ A′  succeeds whenever  A  forges, except for a few negligible bad events ( A  forges without querying  H :  ≤ 1/q ; simulation collision:  ≤ O(q²)/q ;  D=0 :  1/q ). So
+
+Adv_DL(A′)  ≥  Adv_EUF-CMA(A)  −  negl(n).
+
+If DL is hard, the left side is negligible ⇒  Adv_EUF-CMA(A)  is negligible.  A  was arbitrary ⇒ Schnorr is EUF-CMA secure in the AGM+ROM. ∎
+
+────────────────────
+
+The heart of it is that one linear equation — contrast with Reading 2, where you needed two runs ( s₁, s₂ ) and lost an  ε²  factor. Here the algebraic representation  (†)  hands you the second relationship "for free."
+
