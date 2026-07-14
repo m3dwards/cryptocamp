@@ -1,0 +1,53 @@
+AGM = Algebraic Group Model. It's a way of modeling adversaries that sits between two extremes, introduced by Fuchsbauer, Kiltz & Loss in 2018 (mentioned right in your Week 4 notes). It's the setting for Exercises 2 and 3.
+
+The core idea
+
+In a cryptographic group, the only "legitimate" operations are the group ones: multiplying elements, taking inverses, exponentiating (i.e., combining  g ,  pk , etc. with known exponents). The AGM formalizes an adversary that plays by these rules and nothing else.
+
+The definition: an adversary is algebraic if, every time it outputs a group element  Z , it also outputs a list of exponents showing how  Z  was built from the group elements it has already seen (inputs + public parameters). If it was given  g, X, Y , then along with any  Z  it must output  (a, b, c)  such that:
+
+Z = gᵃ · Xᵇ · Yᶜ
+
+The intuition: the adversary can only produce new group elements by combining old ones, so it necessarily "knows" how it did so.
+
+Why this is useful
+
+It rules out "non-algebraic" adversaries — hypothetical attackers that somehow exploit the bit-level encoding of group elements or do something non-group-theoretic. Against an algebraic adversary, that representation list is a gift to the security proof: it hands you extra equations for free.
+
+You saw the payoff directly in Exercise 3. Because the forger had to reveal how it built its group element  R :
+
+R = g^{a₀} · pk^{a₁} · ∏ᵢ Rᵢ^{a_{i+1}}
+
+that single equation, combined with the verification equation, gave you a linear equation in the secret key — solvable in one run, no rewinding. A normal (non-algebraic) proof needed rewinding/forking and lost an  ε²  factor.
+
+Where it sits — the three models
+
+┌──────────────────┬──────────────────────────────────────────────────┬────────────────────────────┐
+│ Model            │ Adversary can…                                   │ Proof strength             │
+├──────────────────┼──────────────────────────────────────────────────┼────────────────────────────┤
+│ Standard model   │ Do literally anything efficient                  │ Strongest (no              │
+│                  │                                                  │ idealization)              │
+├──────────────────┼──────────────────────────────────────────────────┼────────────────────────────┤
+│ AGM              │ Only combine group elements algebraically (must  │ Weaker — only rules out    │
+│                  │ reveal exponents)                                │ algebraic attacks          │
+├──────────────────┼──────────────────────────────────────────────────┼────────────────────────────┤
+│ Generic Group    │ Only combine elements, and group elements look   │ Weakest / most idealized   │
+│ Model (GGM)      │ like random opaque labels                        │                            │
+└──────────────────┴──────────────────────────────────────────────────┴────────────────────────────┘
+
+The AGM is stronger/more realistic than the GGM (it doesn't hide the actual encoding of group elements — the adversary can look at them), but weaker than the standard model (it still restricts how the adversary produces elements).
+
+The honest tradeoff (from your notes)
+
+As the Week 4 notes stress: an AGM proof only shows there's no algebraic attack. A non-algebraic attacker might still exist in principle. So AGM security is a weaker guarantee than a standard-model proof — but in exchange you get:
+
+• much cleaner proofs (no rewinding/forking),
+• tight reductions (no squaring/forking-lemma loss),
+• and nice facts like "in the AGM, DL ⇒ CDH" (Exercise 2) — many assumptions collapse to being equivalent to plain discrete log.
+
+A key contrast worth remembering
+
+The AGM is about how the adversary builds group elements (it reveals exponents). The ROM (Random Oracle Model) is about how the hash function behaves (modeled as a truly random function you can program). They're orthogonal, which is why the Schnorr proof in Exercise 3 uses both at once — AGM for the group element  R , ROM to program/simulate  H .
+
+Want me to contrast AGM vs. the Generic Group Model more concretely, or move on?
+
