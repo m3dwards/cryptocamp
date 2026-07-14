@@ -1,0 +1,79 @@
+Exercise 3 is a real "lightbulb" one, because it shows you why the  R  in  H(R, m)  isn't decoration — it's load-bearing. Let's go slow.
+
+What the exercise is claiming
+
+There are two versions of the Fiat–Shamir signature:
+
+• Good version: challenge  c = H(R, m)   ← hash the envelope and the message
+• Broken version: challenge  c = H(m)   ← hash only the message; drop  R 
+
+The exercise says: prove the broken version is insecure — i.e. show a forger can produce a valid signature on any message without knowing the secret key. And the hint says the tool to do it with is the HVZK simulator. So step one is to really understand that tool.
+
+The tool: the HVZK simulator (slowly)
+
+We met this at the end of the DLEQ explanation as "the verifier could fake a whole transcript by themselves." Let's make it concrete and give it its proper role.
+
+Recall a Sigma transcript is the triple  (R, c, z)  — envelope, challenge, response. Normally you'd think you need the secret  a  to produce a valid one. The surprising fact is:
+
+If someone tells you the challenge  c  first, you can manufacture a perfectly valid-looking transcript  (R, c, z)  without knowing  a  at all.
+
+The little machine that does this is called the simulator. For Schnorr it works like this:
+
+1. Someone hands you a challenge  c .
+2. You pick the response  z  at random first (backwards from normal!).
+3. You then define the envelope to make the check pass:
+ R = gᶻ · A^(−c) 
+4. Output  (R, c, z) .
+
+Check it really passes verification — plug into  gᶻ = R · Aᶜ :
+
+•  R · Aᶜ = (gᶻ · A^(−c)) · Aᶜ = gᶻ · A^(−c) · Aᶜ = gᶻ · A⁰ = gᶻ  ✓
+
+It works, and no  a  was used anywhere. (This is why Sigma protocols are zero-knowledge: a transcript proves nothing secret, since anyone can fake one.)
+
+But — and this is the whole game — there's a catch: the simulator must be given  c  first, and only then does it get to choose  R  (it literally computes  R  from  c ). The order is reversed from an honest run. An honest prover picks  R  first, then learns  c . The simulator picks  c  first, then cooks up  R .
+
+So the simulator is only useful to a forger if the forger can know  c  before committing to  R . Hold that thought — it's the entire exercise.
+
+The one difference that matters: does  c  depend on  R ?
+
+Now look at the two schemes through that lens:
+
+• Good:  c = H(R, m) . To compute  c , you must already have  R . So you cannot know  c  before choosing  R . The simulator's requirement ( c  first, then  R ) is impossible to satisfy — it's circular: you'd need  R  to get  c , but you want  c  to build  R . Attack blocked.
+• Broken:  c = H(m) . To compute  c , you only need the message  m .  R  doesn't appear! So you can compute  c  before picking any  R . The simulator's requirement is now easy to satisfy. Attack wide open.
+
+That's the whole insight. Dropping  R  from the hash lets the forger learn the challenge before committing — which is exactly the door the simulator walks through.
+
+The attack, step by step
+
+A forger who does not know the secret  a  wants to forge a signature on a message  m  of their choosing (they only know the public key  A ). In the broken scheme:
+
+1. Compute the challenge directly:  c = H(m) . This needs only  m  — no  R , no secret. The forger now knows  c  up front.
+2. Run the simulator on that  c : pick  z  at random, set  R = gᶻ · A^(−c) .
+3. Output the forged signature  (R, z)  on message  m .
+
+Now watch the verifier accept it. The verifier:
+
+1. Recomputes the challenge:  c = H(m)  — the same value the forger used (it only depends on  m ).
+2. Checks  gᶻ = R · Aᶜ  — which holds by construction, because the simulator built  R  precisely to make this equation true (we verified that algebra above).
+
+Valid signature. On any message. No secret key. That's a universal forgery — the scheme is totally broken. ∎
+
+Why the same attack fails against the good scheme (worth stating on your call)
+
+Try to run the identical attack against  c = H(R, m)  and watch it collapse:
+
+• To use the simulator, the forger needs  c  first. But  c = H(R, m)  requires  R  as an input.
+• To get  R  from the simulator, the forger needs  c  first.
+• Deadlock. Each needs the other. The forger can't break the circle — so the simulator is useless to them, and the scheme stands.
+
+Including  R  in the hash is exactly what welds the commitment shut before the challenge is known — restoring the "commit-before-challenge" ordering that made the interactive protocol safe in the first place. Fiat–Shamir only works because  R  is in the hash.
+
+Your one-paragraph answer for the call
+
+"In the  c = H(m)  variant the challenge doesn't depend on the commitment  R , so a forger can compute  c = H(m)  for any target message before choosing  R . Handing that  c  to the special-HVZK simulator yields a valid transcript  (R, c, z)  — pick  z  at random, set  R = gᶻ·A^(−c)  — with no secret key. Output  (R, z) ; the verifier recomputes the same  c = H(m)  and the check passes by construction. That's a universal forgery. The attack fails for  c = H(R, m)  because computing  c  would require  R  while the simulator needs  c  to produce  R  — a circular dependency that enforces commit-before-challenge."
+
+────────────────────
+
+Notice the shape of the argument: you didn't need to know anything about the specific Sigma protocol — only that it's special HVZK (i.e. it has a simulator). That's why the exercise phrases it for a general  (P, V) : the attack works against any special-HVZK Sigma protocol Fiat–Shamir'd this broken way.
+
