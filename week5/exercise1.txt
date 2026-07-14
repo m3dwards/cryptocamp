@@ -1,0 +1,22 @@
+Exercise 1 — DLEQ Sigma protocol (Chaum–Pedersen)
+
+Goal: Public  (g, h, A, B) . Prover knows secret  a  with  A = gᵃ  and  B = hᵃ . Prove knowledge of that single  a .
+
+Recall plain Schnorr (proves  A = gᵃ ): commit  R=gʳ , challenge  c , response  z=r+ca , check  gᶻ = R·Aᶜ .
+
+The trick for DLEQ: use one random  r  but mirror every group-element step across both bases  g  and  h . One secret, one nonce, one challenge, one response — just checked twice.
+
+Protocol:
+
+1. Commit — Prover picks  r ← 𝔽  (i.e.  Z_q ) uniformly, sends
+ R₁ = gʳ ,   R₂ = hʳ 
+2. Challenge — Verifier sends random  c ← 𝔽 
+3. Response — Prover sends  z = r + c·a   (mod  q )
+4. Verify — Verifier accepts iff both:
+ gᶻ = R₁ · Aᶜ   and   hᶻ = R₂ · Bᶜ 
+
+Why it satisfies the three Sigma properties:
+
+• Completeness:  gᶻ = g^{r+ca} = gʳ·(gᵃ)ᶜ = R₁·Aᶜ  ✓, and identically  hᶻ = hʳ·(hᵃ)ᶜ = R₂·Bᶜ  ✓.
+• Special soundness: Two accepting transcripts with the same commitment but different challenges,  (R₁,R₂,c,z)  and  (R₁,R₂,c′,z′) ,  c≠c′ . From the  g -equation:  g^{z−z′} = A^{c−c′}  ⟹  a = (z−z′)/(c−c′) . The  h -equation gives the same value  (z−z′)/(c−c′) , so it's forced that  logₘ A = log_h B = a  — you extract the witness and it proves the two DLs are equal.
+• Special HVZK: Simulator given  c : pick  z ← 𝔽  uniformly, set  R₁ = gᶻ·A^{−c} ,  R₂ = hᶻ·B^{−c} . Both equations hold by construction and  (R₁,R₂,c,z)  is distributed identically to a real transcript (real one is uniform in  z  too).
