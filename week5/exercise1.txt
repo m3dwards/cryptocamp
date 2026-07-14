@@ -20,3 +20,159 @@ Why it satisfies the three Sigma properties:
 • Completeness:  gᶻ = g^{r+ca} = gʳ·(gᵃ)ᶜ = R₁·Aᶜ  ✓, and identically  hᶻ = hʳ·(hᵃ)ᶜ = R₂·Bᶜ  ✓.
 • Special soundness: Two accepting transcripts with the same commitment but different challenges,  (R₁,R₂,c,z)  and  (R₁,R₂,c′,z′) ,  c≠c′ . From the  g -equation:  g^{z−z′} = A^{c−c′}  ⟹  a = (z−z′)/(c−c′) . The  h -equation gives the same value  (z−z′)/(c−c′) , so it's forced that  logₘ A = log_h B = a  — you extract the witness and it proves the two DLs are equal.
 • Special HVZK: Simulator given  c : pick  z ← 𝔽  uniformly, set  R₁ = gᶻ·A^{−c} ,  R₂ = hᶻ·B^{−c} . Both equations hold by construction and  (R₁,R₂,c,z)  is distributed identically to a real transcript (real one is uniform in  z  too).
+
+
+(two envelopes, one random number).
+Prover picks one fresh random  r , and sends both:
+
+Setup: the "easy one way, hard the other way" trick
+
+Pick a fixed number and call it  g  (the "base"). Everyone knows  g .
+
+• Your secret is just a number. Call it  a .
+• Your public key is  g  multiplied by itself  a  times. We write that  gᵃ  and call it  A .
+
+So  A = gᵃ . (If  g=3  and  a=4 , then  A = 3×3×3×3 = 81 .)
+
+The crucial fact: with huge numbers that "wrap around" (like a clock going past 12 back to 1), going forwards is easy — anyone can compute  A  from  a . But going backwards — figuring out  a  when you only see  A  — is practically impossible. That backwards problem is called the discrete log, and its hardness is the locked door the whole thing rests on.
+
+So:  A  is safe to publish.  a  stays your secret. You want to prove "I know the  a  behind this  A " without revealing  a . That's exactly the job.
+
+The two high-school rules we'll use
+
+These are the only math tools needed. You've seen both:
+
+1. Adding exponents:  g^(x+y) = gˣ · gʸ   (e.g.  2³⁺² = 2³ · 2² = 8×4 = 32 )
+2. Multiplying exponents:  (gˣ)ʸ = g^(x·y)   (e.g.  (2³)² = 2⁶ = 64 )
+
+That's it. Keep these two in your pocket.
+
+Schnorr, as the three-step dance
+
+Step 1 — Commit (the sealed envelope).
+Prover picks a fresh random number  r , and sends  R = gʳ .
+This is the envelope. Notice it's built the same way as the public key, but with the throwaway random  r  instead of the secret  a .
+
+Step 2 — Challenge.
+Verifier picks a random number  c  and sends it. Prover couldn't have known it in advance.
+
+Step 3 — Response.
+Prover computes one plain number:  z = r + c·a , and sends  z .
+
+The check.
+Verifier accepts if:   gᶻ  =  R · Aᶜ 
+
+Why the check works (this is just the two rules)
+
+Start from the left side,  gᶻ , and substitute  z = r + c·a :
+
+•  gᶻ = g^(r + c·a) 
+•  = gʳ · g^(c·a)   ← (rule 1: split the added exponents)
+•  = gʳ · (gᵃ)ᶜ   ← (rule 2:  g^(c·a)  is  (gᵃ)  raised to  c )
+•  = R · Aᶜ   ← (because  gʳ  is just  R , and  gᵃ  is just  A )
+
+So an honest prover always passes. And every piece the verifier used —  R ,  c ,  A ,  z  — is public. The verifier never sees  a .
+
+Why the secret stays hidden
+
+Look at what the prover actually sent:  z = r + c·a . Because  r  was a fresh random number, it acts like a blindfold —  z  looks completely random and reveals nothing about  a . Send  A  and  R  and  z  all you like;  a  is smothered by  r .
+
+Why a cheater can't fake it (and the "aha")
+
+Suppose a faker somehow answered two different challenges,  c  and  c′ , for the same envelope  R . They'd have sent:
+
+•  z  = r + c·a 
+•  z′ = r + c′·a 
+
+Subtract the second from the first — the  r  cancels:
+
+•  z − z′ = (c − c′)·a 
+
+Now just divide:   a = (z − z′) / (c − c′) 
+
+That's high-school simultaneous equations — two equations, solve for the unknown. The point: anyone who can reliably answer two challenges about one envelope can have their secret pulled straight out. So being consistently convincing is knowing the secret. There's no cheat.
+
+────────────────────
+
+That's the entire Schnorr protocol. Commit an envelope  gʳ , get a random challenge  c , answer  r + c·a , and the check is just the two exponent rules clicking together.
+
+And now DLEQ (Exercise 1) is a tiny step: instead of one public key  A = gᵃ , you have two —  A = gᵃ  and  B = hᵃ  — sharing the same secret  a  but different bases  g  and  h . So you run the exact same dance, but build two envelopes ( gʳ  and  hʳ ) with the same  r , and the verifier does the check twice. Same one secret, proven to sit behind both.
+
+Let's do it. DLEQ, same slow pace.
+
+First — why would anyone even want this?
+
+You have one secret number  a . From it you made two public values, using two different bases:
+
+•  A = gᵃ   (secret  a , base  g )
+•  B = hᵃ   (the same secret  a , but base  h )
+
+You want to prove: "the same hidden  a  sits behind both  A  and  B " — without revealing  a .
+
+Why care? This shows up all over Bitcoin. For example, linking a value across two different settings so someone can verify "these two things really are tied to the same secret" — without leaking the secret itself. (Exercise 2 connects your answer to a real Bitcoin standard, BIP 374.) You don't need the applications to do the exercise, but it's nice to know it's not abstract busywork.
+
+The name: DLEQ = Discrete Log EQuality. "Prove two discrete logs are equal." Pronounced "poodle" (PoDLE). Someone had fun naming it.
+
+The insight in one line
+
+Plain Schnorr proves "I know the  a  behind  A ."
+DLEQ proves "I know an  a  behind  A , and it's the same  a  behind  B ."
+
+You get there by running the Schnorr dance once, but mirroring every group step across both bases — using one random  r , one challenge  c , one response  z . One secret, one nonce, checked in two places. The "sameness" is forced precisely because you reused the same numbers on both sides.
+
+The dance
+
+Step 1 — Commit (two envelopes, one random number).
+Prover picks one fresh random  r , and sends both:
+
+•  R₁ = gʳ 
+•  R₂ = hʳ 
+
+Same  r  in both. That shared  r  is the glue.
+
+Step 2 — Challenge.
+Verifier picks one random  c  and sends it.
+
+Step 3 — Response (one number).
+Prover sends the single number:  z = r + c·a 
+Exactly like Schnorr — there's only one secret and one nonce, so there's only one response.
+
+The check (do it twice).
+Verifier accepts only if both hold:
+
+•  gᶻ = R₁ · Aᶜ 
+•  hᶻ = R₂ · Bᶜ 
+
+Why it works (same two rules, applied on each base)
+
+Left check, using  z = r + c·a :
+
+•  gᶻ = g^(r+c·a) = gʳ · (gᵃ)ᶜ = R₁ · Aᶜ  ✓
+
+Right check, identical steps but with base  h :
+
+•  hᶻ = h^(r+c·a) = hʳ · (hᵃ)ᶜ = R₂ · Bᶜ  ✓
+
+Both are just rule 1 (split the added exponents) then rule 2 (pull out the  c ). An honest prover always passes both.
+
+Why it proves the two secrets are equal (the new magic)
+
+This is the only genuinely new bit versus Schnorr, and it's worth savouring.
+
+Do the same "answer two challenges" trick as before. Suppose a prover answers two different challenges  c  and  c′  for the same pair of envelopes. From the  g -side check you extract, exactly like Schnorr:
+
+•  a = (z − z′) / (c − c′) 
+
+But from the  h -side check you can pull out a secret too — call it the number behind  B :
+
+•  (that number) = (z − z′) / (c − c′) 
+
+It's the same fraction. The  z s and  c s are shared, so both sides spit out the identical value. That's the proof: the discrete log of  A  (base  g ) and the discrete log of  B  (base  h ) are forced to be the same number. You can't pass unless they genuinely match. That's what "proves equality" means here.
+
+Why the secret stays hidden
+
+Same reason as Schnorr: the only response is  z = r + c·a , blindfolded by the random  r . And the two envelopes  gʳ ,  hʳ  leak nothing on their own. In fact, a verifier could fake a whole convincing transcript by themselves — pick  z  at random, then set  R₁ = gᶻ·A^(−c)  and  R₂ = hᶻ·B^(−c)  so the checks pass by construction. Since they can produce the transcript without the prover, watching a real one teaches them nothing about  a . That's the "zero-knowledge" property, concretely.
+
+────────────────────
+
+That is a complete answer to Exercise 1. In one breath: "Chaum–Pedersen protocol — commit  gʳ  and  hʳ  with the same  r , challenge  c , respond  z = r + c·a , verify both  gᶻ = R₁·Aᶜ  and  hᶻ = R₂·Bᶜ ." And you can now justify all three properties in plain words: honest provers pass (the two rules), cheaters get their secret extracted and it's forced equal on both sides (the shared fraction), and nothing leaks (the random  r  / self-fakeable transcript).
