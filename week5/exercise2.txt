@@ -1,0 +1,29 @@
+Exercise 2 — Fiat–Shamir your DLEQ proof (and compare to BIP 374)
+
+Task: take your interactive DLEQ from Exercise 1 and make it non-interactive by hashing the challenge instead of asking a verifier.
+
+Recall DLEQ had two envelopes,  R₁ = gʳ  and  R₂ = hʳ . The one rule for Fiat–Shamir: hash everything the challenge should depend on — both commitments and all the public inputs. So:
+
+Prover (all alone) — a non-interactive DLEQ proof:
+
+1. Pick one random  r .
+2. Compute both envelopes:  R₁ = gʳ ,  R₂ = hʳ .
+3. Compute the challenge by hashing everything public:
+ c = H(g, h, A, B, R₁, R₂) 
+(feeding in  g, h, A, B  too binds the proof to this exact statement so it can't be replayed against different keys)
+4. Compute the single response  z = r + c·a .
+5. Output the proof:  (R₁, R₂, z)  — or, more compactly,  (c, z) .
+
+Verifier (later, offline):
+
+1. Recompute  c = H(g, h, A, B, R₁, R₂) .
+2. Accept iff both  gᶻ = R₁·Aᶜ  and  hᶻ = R₂·Bᶜ .
+
+Done — a non-interactive proof that  A  and  B  share a discrete log, postable anywhere.
+
+Compare to BIP 374 (what the exercise is fishing for): BIP 374 is Bitcoin's real-world DLEQ standard, and it is exactly this construction. Points to note when you compare:
+
+• It's the same Chaum–Pedersen + Fiat–Shamir recipe you just built — reassuring that you re-derived a deployed standard.
+• BIP 374 pins down the engineering details a spec must fix but the math doesn't care about: the exact hash function and a tagged hash (a domain-separation tag so this hash can't collide with hashes used elsewhere in Bitcoin), the precise byte encoding and order of  g, h, A, B, R₁, R₂  fed into the hash, and it often folds in extra context/auxiliary data.
+• The proof is transmitted as the compact  (c, z)  pair (sometimes  (e, s)  in their notation), and the verifier recomputes the envelopes — same idea, just a smaller wire format.
+• Takeaway for the call: "The BIP is my Exercise-1 protocol, Fiat–Shamir'd exactly as in §19.6, with the practical bits nailed down — tagged hash for domain separation, fixed serialization, and hashing all of  g,h,A,B,R₁,R₂  so the challenge binds the full statement."
