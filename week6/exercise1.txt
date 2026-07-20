@@ -1,0 +1,65 @@
+Exercise 1(a) — Sigma protocol: "C is a Pedersen commitment to x = 1"
+
+Setup: group  G  of order  p , generators  g  and  h . A Pedersen commitment to  x ∈ Zp  with
+randomness  y ∈ Zp  is  C = gˣ · hʸ . The prover knows  y  and wants to prove that the committed
+value is  x = 1  — i.e. that  C = g¹ · hʸ = g · hʸ  for some secret  y  — without revealing  y .
+
+Public:  (g, h, C) .  Witness (prover's secret):  y .
+
+
+The one idea
+
+If  x = 1  then  C = g · hʸ , so divide the fixed, publicly-known  g  off the front:
+
+ C · g⁻¹ = hʸ .
+
+Call this  C′ = C / g . Now  C′  is just an  h -power, so proving  x = 1  is *exactly* a Schnorr
+proof of knowledge of the discrete log  y  of  C′  to base  h . We don't build anything new — we
+take Schnorr for  hʸ  and, at the verification step, replace the target  C  with  C · g⁻¹ .
+
+(Equivalently, and this is the "modify the verification" the exercise asks for: plain Schnorr
+would check  hᶻ = R · Cᶜ ; we instead check  hᶻ = R · (C·g⁻¹)ᶜ , i.e. we shift the check by  g .)
+
+
+The protocol
+
+1. Commit — Prover picks  r ← Zp  uniformly and sends
+    R = hʳ .
+2. Challenge — Verifier sends random  c ← Zp .
+3. Response — Prover sends
+    z = r + c·y   (mod p) .
+4. Verify (the modified step) — Verifier accepts iff
+    hᶻ = R · (C · g⁻¹)ᶜ .
+   Equivalently, moving the  g  to the other side:  hᶻ · gᶜ = R · Cᶜ .
+
+Only step 4 differs from the vanilla Schnorr ID protocol for  hʸ  — the prover's messages are
+untouched. The verifier just pre-divides the public  C  by  g  before doing the usual check.
+
+
+Why it satisfies the three Sigma properties
+
+• Completeness. Honest prover has  C = g·hʸ , so  C·g⁻¹ = hʸ . Then
+   hᶻ = h^{r+c·y} = hʳ · (hʸ)ᶜ = R · (C·g⁻¹)ᶜ  ✓.
+
+• Special soundness. Take two accepting transcripts on the same commitment with different
+  challenges:  (R, c, z)  and  (R, c′, z′) ,  c ≠ c′ . Both pass step 4:
+   hᶻ  = R · (C·g⁻¹)ᶜ 
+   hᶻ′ = R · (C·g⁻¹)ᶜ′ 
+  Divide to cancel  R :  h^{z−z′} = (C·g⁻¹)^{c−c′} . Since  c−c′ ≠ 0  is invertible mod  p ,
+   C·g⁻¹ = h^{(z−z′)/(c−c′)} .
+  Set  y* = (z−z′)/(c−c′) . Then  C = g · h^{y*} = g¹ · h^{y*} , which is precisely a Pedersen
+  commitment to  x = 1  with randomness  y* . So from two transcripts we extract a valid
+  witness  y* — special soundness holds, and it certifies the statement (the committed value is 1).
+
+• Special HVZK. Given a challenge  c  up front, the simulator picks  z ← Zp  uniformly and sets
+   R = hᶻ · (C·g⁻¹)⁻ᶜ .
+  Step 4 then holds by construction, and  (R, c, z)  has exactly the real distribution:  z  is
+  uniform in both (in the real run  z = r + c·y  with  r  uniform), and  R  is the unique value
+  making the check pass. No knowledge of  y  is used, so the transcript leaks nothing about  y .
+
+
+One-line summary
+
+To prove "C commits to 1": run Schnorr for the discrete log of  C·g⁻¹  to base  h  — commit
+ R = hʳ , challenge  c , respond  z = r + c·y , and verify the shifted equation
+ hᶻ = R · (C·g⁻¹)ᶜ .
