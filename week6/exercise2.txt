@@ -1,0 +1,105 @@
+Exercise 2 — Schnorr signatures are secure (EUF-CMA) in the ROM if Discrete Log is hard
+
+We use the General Forking Lemma (Reading 3.1) directly — no Fiat-Shamir.
+
+Setup
+
+Group  G  of prime order  p , generator  g . Hash  H  is a random oracle into  Z_p .
+
+Schnorr signature in  (R, s)  form:
+• Keys:  sk = x ,  pk = X = gˣ .
+• Sign(m): pick  k , set  R = gᵏ ,  e = H(R, m) ,  s = k + e·x . Signature =  (R, s) .
+• Verify: accept iff  gˢ = R · Xᵉ , where  e = H(R, m) .
+
+Let  A  be any forger. It wins with probability  ε , makes  q_H  hash queries and  q_S
+signing queries. We build  B  that solves Discrete Log, and show  ε  must be tiny.
+
+
+The plan in one line
+
+Run the forger, get a forgery. Rewind it (forking lemma), change one hash answer, get a
+SECOND forgery on the same  R  but a different challenge. Subtract the two — out pops  x .
+
+
+Step 1 — Wrap the forger so the Forking Lemma can use it
+
+The lemma runs an algorithm on  (x, h₁,…,h_q)  and expects back an index  J  and some
+leftovers  σ . Matching the letters to our world:
+
+•  x   = the DL challenge, which we hand to  A  as its public key  X .
+•  h₁,…,h_q  = the answers we give to  A 's random-oracle queries (each uniform in  Z_p ).
+   So the answer pool size is  h = p , and  q = q_H + 1 .
+•  J   = which hash query the forgery relied on ( J = 0  means "A failed").
+•  σ   = the forgery data  (R*, s*, e*)  we'll extract from.
+
+How the wrapper answers  A :
+
+• Public key: just give  A  the challenge  X . (A real key looks the same — uniform.)
+• Hash queries: hand out the next  hᵢ  from the list (unless it's a programmed point below).
+• Signing queries (the trick to sign WITHOUT knowing  x ): to sign  mⱼ , pick  sⱼ, eⱼ  at
+  random, set  Rⱼ = g^{sⱼ}·X^{-eⱼ} , program  H(Rⱼ, mⱼ) := eⱼ , and return  (Rⱼ, sⱼ) .
+  By construction  g^{sⱼ} = Rⱼ·X^{eⱼ} , so it verifies, and  Rⱼ  is uniform — looks exactly
+  like a real signature. We never needed  x .
+
+When  A  outputs a valid forgery  (m*, R*, s*) , note that  m*  was never signed, so
+ (R*, m*)  is NOT a programmed point — its answer came from the list, say at index  I .
+Set  J = I  and  σ = (R*, s*, e*) . Call the wrapper's success probability  acc  (it equals
+ ε  minus tiny stuff, see the end).
+
+
+Step 2 — Fork it (this is the whole lemma)
+
+Run the wrapper once with coins  ρ  and answers  h₁,…,h_q . It succeeds at query  I .
+Now rewind: keep the SAME coins  ρ  and the SAME first  I−1  answers, but feed FRESH
+answers from query  I  onward. Run it again.
+
+Because everything before query  I  is identical,  A  behaves identically up to that moment,
+so it produces the SAME  R*  and asks the SAME  I-th question  (R*, m*) . Only the answer
+differs: first run gets  e = h_I , second run gets  e' = h'_I ≠ e .
+
+If both runs succeed on the same query, we now have two forgeries on the same  R* .
+
+
+Step 3 — Subtract the two forgeries to get x
+
+  Run 1:  gˢ  = R* · Xᵉ        (e  = h_I)
+  Run 2:  gˢ' = R* · Xᵉ'       (e' = h'_I,  e ≠ e')
+
+Divide to cancel  R* :
+
+  g^(s − s') = X^(e − e') = g^(x·(e − e'))
+  ⟹  s − s' = x·(e − e')   (mod p)
+
+Since  e ≠ e'  and  p  is prime,  (e − e')  is invertible, so
+
+           s − s'
+   x  =  ───────────    (mod p)
+           e − e'
+
+ B  outputs this  x  — the discrete log of  X . So every time forking works,  B  breaks DL.
+
+
+Step 4 — The numbers
+
+The Forking Lemma promises:  frk ≥ acc·(acc/q − 1/p) , i.e. roughly  frk ≈ acc²/q_H .
+Since forking working  ⟹  B  solving DL, we get
+
+   Adv_DL(B)  ≥  frk  ≈  ε² / q_H     (ignoring tiny terms).
+
+The "tiny terms" hidden in  acc ≥ ε − negl :
+•  A  forging without ever asking  H(R*, m*) : then the check passes only by luck,  ≤ 1/p .
+•  A signing simulation clash (a programmed  Rⱼ  collides or was already queried):
+   ≤ q_S·(q_H + q_S)/p . Both negligible.
+
+ B  just runs  A  twice, so its running time is about  2·(A's time) .
+
+
+Conclusion
+
+If DL is hard,  Adv_DL(B)  is negligible. But  ε² ≲ q_H·Adv_DL(B) , so  ε  is negligible too.
+ A  was an arbitrary forger, so Schnorr is EUF-CMA secure in the ROM whenever DL is hard. ∎
+
+The forking lemma did all the heavy lifting: it's the thing that let us turn ONE forgery into
+TWO forgeries on the same  R  — the exact "two transcripts" we need to solve for  x . And that
+"run twice" is why we pay the  ε²  price (compare the AGM proofs in week 4, which get the
+second equation for free and never rewind).
